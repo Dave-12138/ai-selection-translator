@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Ai划词翻译
 // @namespace    http://tampermonkey.net/
-// @version      1.0
+// @version      1.1
 // @description  选中文字后弹出翻译图标，支持划词翻译。无悬浮球，UI 全面现代化升级 (毛玻璃/柔和阴影/极简风)。
 // @author       Free White Dove
 // @match        *://*/*
@@ -225,6 +225,26 @@
         }
     });
 
+    // v1.1 alt+鼠标中键 使用沉浸翻译
+    document.addEventListener('mousedown', function (event) {
+        if (event.button === 1 && event.altKey) {
+            const clickedElement = event.target;
+            event.preventDefault();
+            if (!clickedElement.hasAttribute('translated') && clickedElement.innerHTML.length < 6000) {
+                clickedElement.toggleAttribute("translated", true);
+                clickedElement.toggleAttribute("translating", true);
+                const config = getConfig();
+                callAI(clickedElement.innerHTML, config, null, (innerHTML) => {
+                    const el = Object.assign(document.createElement(clickedElement.tagName), { innerHTML });
+                    el.toggleAttribute("translated", true);
+                    clickedElement.appendChild(el);
+                    clickedElement.toggleAttribute("translating", false);
+                }, (err) => {
+                    if(panelEl) panelEl.querySelector('.ai-trans-content').innerHTML = `<span style="color:#ef4444">${err}</span>`;
+                });
+            }
+        }
+    }, true);
     // --- 2. 核心配置存取 ---
     function getSafeConfigs() {
         let savedConfigs = GM_getValue('provider_configs', {});
