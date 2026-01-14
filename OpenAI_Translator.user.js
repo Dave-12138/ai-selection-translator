@@ -13,7 +13,7 @@
 // @grant        GM_addStyle
 // ==/UserScript==
 
-(function() {
+(function () {
     'use strict';
 
     // --- 接口预设配置 ---
@@ -183,10 +183,26 @@
 
         /* 正在翻译的高亮 */
         .ai-translating-text { background: rgba(37, 99, 235, 0.1); border-bottom: 2px solid var(--ai-primary); }
+        /* 正在翻译的更加高亮 */
+        [translating] {
+            border-image: linear-gradient(var(--ideg), #f79533, #f37055, #ef4e7b, #a166ab, #5073b8, #1098ad, #07b39b, #6fba82) 27% / 8px; 
+            animation: animatedgradient 3s linear alternate infinite; 
+        }
+
+        @keyframes animatedgradient {
+            0% {--ideg:0deg}
+            50% {--ideg:180deg}
+            100% {--ideg:359deg}
+        }
     `;
 
     GM_addStyle(STYLES);
-
+    CSS.registerProperty({
+        name: "--ideg",
+        syntax: "<angle>",
+        inherits: false,
+        initialValue: "0deg",
+    });
     // --- 状态管理 ---
     let iconEl = null;
     let panelEl = null;
@@ -220,7 +236,7 @@
                 // 增加一个淡出动画
                 panelEl.style.opacity = '0';
                 panelEl.style.transform = 'translateY(5px)';
-                setTimeout(() => { if(panelEl) panelEl.remove(); panelEl = null; }, 200);
+                setTimeout(() => { if (panelEl) panelEl.remove(); panelEl = null; }, 200);
             }
         }
     });
@@ -244,7 +260,7 @@
                     clickedElement.appendChild(el);
                     clickedElement.toggleAttribute("translating", false);
                 }, (err) => {
-                    if(panelEl) panelEl.querySelector('.ai-trans-content').innerHTML = `<span style="color:#ef4444">${err}</span>`;
+                    if (panelEl) panelEl.querySelector('.ai-trans-content').innerHTML = `<span style="color:#ef4444">${err}</span>`;
                 });
             }
         }
@@ -395,7 +411,7 @@
             headers: headers,
             data: JSON.stringify(payload),
             anonymous: true,
-            onload: function(response) {
+            onload: function (response) {
                 if (response.status !== 200) {
                     try {
                         const errData = JSON.parse(response.responseText);
@@ -420,10 +436,10 @@
                         onError("响应异常 (无内容)");
                     }
                 } catch (e) {
-                     onError(`解析错误: ${e.message}`);
+                    onError(`解析错误: ${e.message}`);
                 }
             },
-            onerror: function(err) { onError("网络连接失败"); }
+            onerror: function (err) { onError("网络连接失败"); }
         });
     }
 
@@ -436,9 +452,9 @@
         }
         showPanel(x, y, `<div style="color:#999; font-style:italic;">Thinking...</div>`);
         callAI(selectedText, config, null, (text) => {
-            if(panelEl) panelEl.querySelector('.ai-trans-content').innerText = text;
+            if (panelEl) panelEl.querySelector('.ai-trans-content').innerText = text;
         }, (err) => {
-            if(panelEl) panelEl.querySelector('.ai-trans-content').innerHTML = `<span style="color:#ef4444">${err}</span>`;
+            if (panelEl) panelEl.querySelector('.ai-trans-content').innerHTML = `<span style="color:#ef4444">${err}</span>`;
         });
     }
 
@@ -552,7 +568,7 @@
             if (!apiUrl.includes('/chat/completions')) {
                 const cleanUrl = apiUrl.replace(/\/+$/, '');
                 const newUrl = cleanUrl + '/v1/chat/completions';
-                if(confirm(`检测到您的接口地址可能不完整：\n\n当前：${apiUrl}\n建议：${newUrl}\n\n是否自动修正？`)) {
+                if (confirm(`检测到您的接口地址可能不完整：\n\n当前：${apiUrl}\n建议：${newUrl}\n\n是否自动修正？`)) {
                     apiUrl = newUrl;
                     urlInput.value = apiUrl;
                 }
@@ -573,7 +589,7 @@
 
             GM_xmlhttpRequest({
                 method: "GET", url: modelsUrl, headers: { "Authorization": `Bearer ${apiKey}` }, anonymous: true,
-                onload: function(response) {
+                onload: function (response) {
                     try {
                         const res = JSON.parse(response.responseText);
                         if (res.data && Array.isArray(res.data)) {
@@ -588,9 +604,9 @@
                             modelInput.style.borderColor = '#10b981';
                             setTimeout(() => modelInput.style.borderColor = '', 1000);
                         } else { resultDiv.innerHTML = `<span style="color:#f59e0b">⚠️ 接口正常但无列表数据</span>`; }
-                    } catch(e) { resultDiv.innerHTML = `<span style="color:#ef4444">❌ 解析失败</span>`; }
+                    } catch (e) { resultDiv.innerHTML = `<span style="color:#ef4444">❌ 解析失败</span>`; }
                 },
-                onerror: function() { resultDiv.innerHTML = `<span style="color:#ef4444">❌ 网络错误</span>`; }
+                onerror: function () { resultDiv.innerHTML = `<span style="color:#ef4444">❌ 网络错误</span>`; }
             });
         });
 
