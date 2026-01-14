@@ -231,9 +231,13 @@
             const clickedElement = event.target;
             event.preventDefault();
             if (!clickedElement.hasAttribute('translated') && clickedElement.innerHTML.length < 6000) {
+                const config = getConfig();
+                if (!config.apiKey) {
+                    showPanel(event.pageX, event.pageY, `⚠️ 请先在油猴菜单中配置 API Key`);
+                    return;
+                }
                 clickedElement.toggleAttribute("translated", true);
                 clickedElement.toggleAttribute("translating", true);
-                const config = getConfig();
                 callAI(clickedElement.innerHTML, config, null, (innerHTML) => {
                     const el = Object.assign(document.createElement(clickedElement.tagName), { innerHTML });
                     el.toggleAttribute("translated", true);
